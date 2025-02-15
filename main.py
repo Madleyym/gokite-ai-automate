@@ -8,6 +8,21 @@ from colorama import init, Fore, Back, Style
 
 init(autoreset=True)
 
+GLOBAL_HEADERS = {
+    'Accept-Language': 'en-GB,en;q=0.9,en-US;q=0.8,id;q=0.7',
+    'Connection': 'keep-alive',
+    'Content-Type': 'application/json',
+    'Origin': 'https://agents.testnet.gokite.ai',
+    'Referer': 'https://agents.testnet.gokite.ai/',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'cross-site',
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0',
+    'sec-ch-ua': '"Not(A:Brand";v="99", "Microsoft Edge";v="133", "Chromium";v="133"',
+    'sec-ch-ua-mobile': '?0',
+    'sec-ch-ua-platform': '"Windows"'
+}
+
 AI_ENDPOINTS = {
     "https://deployment-uu9y1z4z85rapgwkss1muuiz.stag-vxzy.zettablock.com/main": {
         "agent_id": "deployment_UU9y1Z4Z85RAPGwkss1mUUiZ",
@@ -88,10 +103,9 @@ class KiteAIAutomation:
             'transaction_types': 'coin_transfer',
             'age': '5m'
         }
-        headers = {
-            'accept': '*/*',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+        
+        headers = GLOBAL_HEADERS.copy()
+        headers['accept'] = '*/*'
         
         try:
             response = requests.get(url, params=params, headers=headers)
@@ -104,11 +118,9 @@ class KiteAIAutomation:
             return []
 
     def send_ai_query(self, endpoint: str, message: str) -> str:
-        headers = {
-            'Accept': 'text/event-stream',
-            'Content-Type': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+        headers = GLOBAL_HEADERS.copy()
+        headers['Accept'] = 'text/event-stream'
+        
         data = {
             "message": message,
             "stream": True
@@ -145,10 +157,9 @@ class KiteAIAutomation:
     def report_usage(self, endpoint: str, message: str, response: str) -> bool:
         print(f"{self.print_timestamp()} {Fore.BLUE}Reporting usage...{Style.RESET_ALL}")
         url = 'https://quests-usage-dev.prod.zettablock.com/api/report_usage'
-        headers = {
-            'Content-Type': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+        
+        headers = GLOBAL_HEADERS.copy()
+        
         data = {
             "wallet_address": self.wallet_address,
             "agent_id": AI_ENDPOINTS[endpoint]["agent_id"],
@@ -166,10 +177,9 @@ class KiteAIAutomation:
 
     def check_stats(self) -> Dict:
         url = f'https://quests-usage-dev.prod.zettablock.com/api/user/{self.wallet_address}/stats'
-        headers = {
-            'accept': '*/*',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+        
+        headers = GLOBAL_HEADERS.copy()
+        headers['accept'] = '*/*'
         
         try:
             response = requests.get(url, headers=headers)
