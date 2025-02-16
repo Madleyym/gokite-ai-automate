@@ -98,10 +98,9 @@ class KiteAIAutomation:
 
     def get_recent_transactions(self) -> List[str]:
         print(f"{self.print_timestamp()} {Fore.BLUE}Fetching recent transactions...{Style.RESET_ALL}")
-        url = 'https://testnet.kitescan.ai/api/v2/advanced-filters'
+        url = 'https://testnet.kitescan.ai/api/v2/transactions'
         params = {
-            'transaction_types': 'coin_transfer',
-            'age': '5m'
+            'filter': 'validated'
         }
         
         headers = GLOBAL_HEADERS.copy()
