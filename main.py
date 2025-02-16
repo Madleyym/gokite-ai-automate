@@ -8,6 +8,7 @@ from colorama import init, Fore, Back, Style
 
 init(autoreset=True)
 
+# Global Headers
 GLOBAL_HEADERS = {
     'Accept-Language': 'en-GB,en;q=0.9,en-US;q=0.8,id;q=0.7',
     'Connection': 'keep-alive',
@@ -24,8 +25,8 @@ GLOBAL_HEADERS = {
 }
 
 AI_ENDPOINTS = {
-    "https://deployment-uu9y1z4z85rapgwkss1muuiz.stag-vxzy.zettablock.com/main": {
-        "agent_id": "deployment_UU9y1Z4Z85RAPGwkss1mUUiZ",
+    "https://deployment-hp4y88pxnqxwlmpxllicjzzn.stag-vxzy.zettablock.com/main": {
+        "agent_id": "deployment_Hp4Y88pxNQXwLMPxlLICJZzN",
         "name": "Kite AI Assistant",
         "questions": [
             "What is Kite AI?",
@@ -40,8 +41,8 @@ AI_ENDPOINTS = {
             "What are the use cases for Kite AI?"
         ]
     },
-    "https://deployment-ecz5o55dh0dbqagkut47kzyc.stag-vxzy.zettablock.com/main": {
-        "agent_id": "deployment_ECz5O55dH0dBQaGKuT47kzYC",
+    "https://deployment-nc3y3k7zy6gekszmcsordhu7.stag-vxzy.zettablock.com/main": {
+        "agent_id": "deployment_nC3y3k7zy6gekSZMCSordHu7",
         "name": "Crypto Price Assistant",
         "questions": [
             "Price of solana",
