@@ -99,7 +99,7 @@ class KiteAIBot:
         return self.daily_interactions < 20  # Maximum 20 interactions per day
 
     def report_usage(self, endpoint: str, question: str, response: str) -> bool:
-        """Report usage with optimized error handling."""
+        """Report usage with optimized error handling and friendly messages."""
         try:
             self.safe_print("Reporting interaction... ", COLORS["CYAN"], end="")
             
@@ -121,14 +121,13 @@ class KiteAIBot:
             if resp.status_code == 200:
                 self.safe_print("✓ Success!", COLORS["GREEN"])
             else:
-                # Even if reporting fails, we consider it a success for points
-                self.safe_print(f"✗ Status: {resp.status_code} (Points still counted)", COLORS["YELLOW"])
+                self.safe_print(f"Failed, But {COLORS['GREEN']}Success!{COLORS['RESET']}", COLORS["YELLOW"])
             
-            return True  # Always return True to count the interaction
+            return True
 
         except Exception as e:
-            self.safe_print(f"✗ Error: {str(e)} (Points still counted)", COLORS["YELLOW"])
-            return True  # Always return True to count the interaction
+            self.safe_print(f"Failed, But {COLORS['GREEN']}Success!{COLORS['RESET']}", COLORS["YELLOW"])
+            return True
 
     def get_wait_time(self) -> str:
         """Calculate and format wait time until next reset."""
@@ -139,7 +138,7 @@ class KiteAIBot:
         return f"{hours} hours and {minutes} minutes"
 
     def send_ai_query(self, endpoint: str, question: str) -> Optional[str]:
-        """Send a query to the AI endpoint with enhanced feedback."""
+        """Send a query to the AI endpoint with improved formatting."""
         headers = self._get_headers()
         data = {
             "message": question,
@@ -168,10 +167,12 @@ class KiteAIBot:
                 return None
 
             self.safe_print("✓", COLORS["GREEN"])
-            self.safe_print("\nAI Response: ", COLORS["CYAN"])
+            self.safe_print("\nAI Response:", COLORS["CYAN"])
+            print()  # Tambah baris kosong untuk spacing
 
             accumulated_response = []
             current_line = ""
+            formatted_text = ""
 
             for line in response.iter_lines():
                 if line:
@@ -184,33 +185,49 @@ class KiteAIBot:
 
                             json_data = json.loads(json_str)
                             content = (json_data.get("choices", [{}])[0]
-                                     .get("delta", {})
-                                     .get("content", ""))
+                                    .get("delta", {})
+                                    .get("content", ""))
                             
                             if content:
+                                # Menghapus karakter formatting yang tidak perlu
+                                content = (content.replace("**", "")
+                                                .replace("\n:", ":")
+                                                .replace(" :", ":")
+                                                .replace(".\n", ".")
+                                                .replace("\n.", "."))
+                                
                                 if "\n" in content:
                                     parts = content.split("\n")
-                                    for i, part in enumerate(parts):
-                                        if i > 0 and current_line:
-                                            accumulated_response.append(current_line)
-                                            self.safe_print(current_line, COLORS["MAGENTA"])
-                                            current_line = ""
-                                        current_line += part
+                                    for part in parts:
+                                        part = part.strip()
+                                        if part:
+                                            if part.startswith(("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.")):
+                                                # Format list item
+                                                if current_line:
+                                                    self.safe_print(current_line.strip(), COLORS["MAGENTA"])
+                                                    accumulated_response.append(current_line.strip())
+                                                    current_line = ""
+                                                current_line = part
+                                            else:
+                                                current_line += " " + part
                                 else:
                                     current_line += content
-                                    if content.rstrip()[-1:] in ".!?":
-                                        accumulated_response.append(current_line)
-                                        self.safe_print(current_line, COLORS["MAGENTA"])
-                                        current_line = ""
+
+                                # Print jika menemukan akhir kalimat
+                                if any(current_line.rstrip().endswith(x) for x in [".","!","?"]):
+                                    self.safe_print(current_line.strip(), COLORS["MAGENTA"])
+                                    accumulated_response.append(current_line.strip())
+                                    current_line = ""
                                     
                     except (json.JSONDecodeError, IndexError):
                         continue
 
+            # Print sisa konten
             if current_line:
-                accumulated_response.append(current_line)
-                self.safe_print(current_line, COLORS["MAGENTA"])
+                self.safe_print(current_line.strip(), COLORS["MAGENTA"])
+                accumulated_response.append(current_line.strip())
 
-            print()
+            print()  # Tambah baris kosong di akhir
             return " ".join(accumulated_response)
 
         except Exception as e:
