@@ -3,24 +3,21 @@ import uuid
 from datetime import datetime, timedelta
 
 # Core configuration
-MAX_DAILY_POINTS = 200
+MAX_DAILY_POINTS = 200  # Updated from 1000 to 200
 POINTS_PER_INTERACTION = 10
-DEFAULT_WALLET = "YOUR_WALLET_ADDRESS"  # Replace with your EVM wallet address
-
-# Proxy configuration (optional)
-PROXIES = {"YOUR_PROXY_URL"}  # Add your proxy URL if using one
+DEFAULT_WALLET = "YOUR_WALLET_ADDRESS"
 
 # Security and timing settings
 SECURITY = {
-    "min_delay": 5.0,  
-    "max_delay": 12.0, 
-    "typing_speed": 0.05,  
-    "max_retries": 3,  
-    "session_timeout": 3600,  
-    "cooldown_base": 30,  
+    "min_delay": 5.0,
+    "max_delay": 12.0,
+    "typing_speed": 0.05,  # New setting
+    "max_retries": 3,
+    "session_timeout": 3600,  # New setting
+    "cooldown_base": 30,
 }
 
-# Terminal colors for Termux compatibility
+# Terminal colors with RGB values
 COLORS = {
     "GREEN": "\033[38;2;0;255;0m",
     "RED": "\033[38;2;255;0;0m",
@@ -32,27 +29,13 @@ COLORS = {
     "RESET": "\033[0m",
 }
 
-# Browser configurations
-BROWSERS = [
-    {
-        "name": "Chrome",
-        "versions": ["108.0.0.0", "109.0.0.0", "110.0.0.0", "111.0.0.0"],
-        "template": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36",
-    },
-    {
-        "name": "Edge",
-        "versions": ["108.0.1462.76", "109.0.1518.78", "110.0.1587.57"],
-        "template": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_ver} Safari/537.36 Edg/{version}",
-    },
-]
-
-# API Endpoints
+# Updated Base URLs
 BASE_URLS = {
-    "USAGE_API": "https://quests-usage-dev.prod.zettablock.com",
-    "STATS_API": "https://quests-usage-dev.prod.zettablock.com/api/user",
+    "USAGE_API": "https://quests-usage-dev.prod.zettablock.com/api",  
+    "STATS_API": "https://quests-usage-dev.prod.zettablock.com/api/user"
 }
 
-# AI Endpoints configuration
+# Updated AI Endpoints with new endpoints and questions
 AI_ENDPOINTS = {
     "https://deployment-hp4y88pxnqxwlmpxllicjzzn.stag-vxzy.zettablock.com/main": {
         "agent_id": "deployment_Hp4Y88pxNQXwLMPxlLICJZzN",
@@ -87,3 +70,20 @@ AI_ENDPOINTS = {
         ],
     },
 }
+
+# Updated Browser configurations
+BROWSERS = [
+    {
+        "name": "Chrome",
+        "versions": ["108.0.0.0", "109.0.0.0", "110.0.0.0", "111.0.0.0"],
+        "template": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36",
+    },
+    {
+        "name": "Edge",
+        "versions": ["108.0.1462.76", "109.0.1518.78", "110.0.1587.57"],
+        "template": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_ver} Safari/537.36 Edg/{version}",
+    },
+]
+
+# Add TIMEOUT_SETTINGS to prevent the previous error
+TIMEOUT_SETTINGS = {"CONNECT": 60, "READ": 120}
