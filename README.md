@@ -42,27 +42,31 @@ cd kite-ai-automation
 pip install -r requirements.txt
 ```
 
+Or install individual packages:
+```bash
+pip install requests colorama urllib3 datetime typing uuid
+```
+
 ## Configuration
 
-Before running the bot, you may want to modify these settings in the code:
+Before running the bot, configure these settings in `config.py`:
 
 1. Wallet Configuration:
 ```python
-DEFAULT_WALLET = "YOUR_ADDRESS"
+DEFAULT_WALLET = "YOUR_WALLET_ADDRESS"  # Replace with your EVM wallet address
 ```
 
-2. Proxy Configuration:
+2. Proxy Configuration (Optional):
 ```python
 PROXIES = {
-    "YOUR_PROXY_HTTP/SOCKS5"
+    "YOUR_PROXY_URL"  # Add your proxy URL if using one
 }
 ```
 
-3. Point System Settings:
+3. Point System Settings (Default values recommended):
 ```python
 MAX_DAILY_POINTS = 200
 POINTS_PER_INTERACTION = 10
-MAX_DAILY_INTERACTIONS = 20
 ```
 
 ## Usage
@@ -87,12 +91,12 @@ python main.py
 
 1. Connection Timeout Error
 ```
-Error: HTTPSConnectionPool(host='quests-usage-dev.prod.zettablock.com', port=443): Read timed out. (read timeout=15)
+Error: HTTPSConnectionPool: Read timed out
 ```
 **Solution**: This is a known issue with the usage tracking server. The bot continues to function normally despite this error. No action required.
 
 2. Proxy Connection Issues
-- Verify your proxy configuration in the PROXIES variable
+- Verify your proxy configuration in the config file
 - Ensure your proxy service is active
 - Check proxy credentials if required
 
@@ -162,3 +166,10 @@ For issues and updates:
 ## Disclaimer
 
 This automation tool is not officially associated with Kite AI. Use at your own discretion and ensure compliance with all relevant terms of service.
+
+## Security Notice
+
+- Never share your private keys or wallet seed phrases
+- Use environment variables or a configuration file to store sensitive information
+- Regularly monitor your wallet activities
+- Use a dedicated wallet for automation purposes
