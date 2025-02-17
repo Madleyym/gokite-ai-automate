@@ -1,52 +1,58 @@
-from __future__ import annotations
 import platform
 import uuid
 from datetime import datetime, timedelta
 
-# Konfigurasi utama
+# Core configuration
 MAX_DAILY_POINTS = 200
 POINTS_PER_INTERACTION = 10
 DEFAULT_WALLET = "YOUR_WALLET_ADDRESS"  # Replace with your EVM wallet address
 
-# Proxy configuration
-PROXIES = {"YOUR_PROXY_URL"}  # Add your proxy URL if using one"
+# Proxy configuration (optional)
+PROXIES = {"YOUR_PROXY_URL"}  # Add your proxy URL if using one
 
-# Global Headers
-GLOBAL_HEADERS = {
-    "Accept-Language": "en-GB,en;q=0.9,en-US;q=0.8,id;q=0.7",
-    "Connection": "keep-alive",
-    "Content-Type": "application/json",
-    "Origin": "https://agents.testnet.gokite.ai",
-    "Referer": "https://agents.testnet.gokite.ai/",
-    "Sec-Fetch-Dest": "empty",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Site": "cross-site",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0",
-    "sec-ch-ua": '"Not(A:Brand";v="99", "Microsoft Edge";v="133", "Chromium";v="133"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
+# Security and timing settings
+SECURITY = {
+    "min_delay": 5.0,  
+    "max_delay": 12.0, 
+    "typing_speed": 0.05,  
+    "max_retries": 3,  
+    "session_timeout": 3600,  
+    "cooldown_base": 30,  
 }
 
+# Terminal colors for Termux compatibility
+COLORS = {
+    "GREEN": "\033[38;2;0;255;0m",
+    "RED": "\033[38;2;255;0;0m",
+    "YELLOW": "\033[38;2;255;255;0m",
+    "BLUE": "\033[38;2;0;150;255m",
+    "MAGENTA": "\033[38;2;255;0;255m",
+    "CYAN": "\033[38;2;0;255;255m",
+    "WHITE": "\033[38;2;255;255;255m",
+    "RESET": "\033[0m",
+}
+
+# Browser configurations
+BROWSERS = [
+    {
+        "name": "Chrome",
+        "versions": ["108.0.0.0", "109.0.0.0", "110.0.0.0", "111.0.0.0"],
+        "template": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36",
+    },
+    {
+        "name": "Edge",
+        "versions": ["108.0.1462.76", "109.0.1518.78", "110.0.1587.57"],
+        "template": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_ver} Safari/537.36 Edg/{version}",
+    },
+]
+
+# API Endpoints
 BASE_URLS = {
     "USAGE_API": "https://quests-usage-dev.prod.zettablock.com",
     "STATS_API": "https://quests-usage-dev.prod.zettablock.com/api/user",
 }
 
-TIMEOUT_SETTINGS = {"CONNECT": 10, "READ": 15, "RETRY_DELAY": 3}
-
-# Update session settings
-SESSION_SETTINGS = {
-    "MAX_RETRIES": 3,
-    "BACKOFF_FACTOR": 1,
-    "STATUS_FORCELIST": [408, 429, 500, 502, 503, 504],
-}
-
-RETRY_STRATEGY = {
-    "total": 3,
-    "backoff_factor": 0.5,
-    "status_forcelist": [429, 500, 502, 503, 504],
-}
-
+# AI Endpoints configuration
 AI_ENDPOINTS = {
     "https://deployment-hp4y88pxnqxwlmpxllicjzzn.stag-vxzy.zettablock.com/main": {
         "agent_id": "deployment_Hp4Y88pxNQXwLMPxlLICJZzN",
@@ -62,16 +68,6 @@ AI_ENDPOINTS = {
             "Explain Kite AI's approach to blockchain data",
             "How does Kite AI ensure security?",
             "What are the latest updates in Kite AI?",
-            "How does Kite AI handle large-scale data processing?",
-            "What types of blockchain networks does Kite AI support?",
-            "Can you explain Kite AI's machine learning capabilities?",
-            "What are the best practices for using Kite AI in development?",
-            "How does Kite AI compare to other blockchain analysis tools?",
-            "What kind of API integration does Kite AI offer?",
-            "How can Kite AI help in detecting blockchain vulnerabilities?",
-            "What are the performance metrics of Kite AI?",
-            "How does Kite AI handle real-time blockchain data?",
-            "What are the future development plans for Kite AI?",
         ],
     },
     "https://deployment-nc3y3k7zy6gekszmcsordhu7.stag-vxzy.zettablock.com/main": {
@@ -88,16 +84,6 @@ AI_ENDPOINTS = {
             "What's the latest on AVAX?",
             "Current crypto market overview",
             "Latest price trends in major cryptocurrencies",
-            "What's the trading volume of Bitcoin in the last 24 hours?",
-            "How has ETH performed against BTC this week?",
-            "What are the top gainers in the crypto market today?",
-            "Can you analyze the current market sentiment?",
-            "What's the market cap distribution among top 10 coins?",
-            "How are DeFi tokens performing in the current market?",
-            "What's the current gas price on Ethereum network?",
-            "Which cryptocurrencies show strong momentum today?",
-            "What's the current fear and greed index in crypto?",
-            "How are layer-2 tokens performing in the market?",
         ],
     },
 }
