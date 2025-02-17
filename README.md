@@ -1,175 +1,153 @@
-# Kite AI Automation
+# Kite AI Bot
 
-An automated script for interacting with Kite AI Assistant and Crypto Price Assistant on the Kite AI testnet platform.
+An automated interaction bot for the Kite AI platform that helps users engage with AI agents while respecting daily limits and implementing security best practices.
 
 ## Features
-- Automated interaction with multiple Kite AI agents
-- Point accumulation system (up to 200 points daily)
-- Intelligent question rotation
-- Proxy support
-- Automatic session management
-- Rate limiting and error handling
-- Detailed statistics tracking
 
-## Prerequisites
+- Automated interactions with multiple Kite AI agents
+- Daily interaction limit management (20 interactions per day)
+- Anti-detection measures with rotating user agents
+- Secure session handling and error recovery
+- Real-time interaction tracking and statistics
+- Colorized console output for better visibility
+- Cross-platform support (Windows, Linux, MacOS)
 
-### System Requirements
-- Python 3.7 or higher
-- pip (Python package installer)
-- Internet connection
-- (Optional) Proxy service
+## Requirements
 
-### Required Python Packages
-```bash
-pip install requests colorama urllib3
-```
-
-Or install all requirements at once using:
-```bash
-pip install -r requirements.txt
-```
+- Python 3.7+
+- Required packages:
+  - requests
+  - urllib3
+  - typing
+  - json
+  - datetime
 
 ## Installation
 
-1. Clone or download the repository:
+1. Clone this repository or download the source code
+2. Install the required dependencies:
 ```bash
-git clone https://github.com/Madleyym/gokite-ai-automate
-cd kite-ai-automation
-```
-
-2. Install the required packages:
-```bash
-pip install -r requirements.txt
-```
-
-Or install individual packages:
-```bash
-pip install requests colorama urllib3 datetime typing uuid
+pip install requests urllib3
 ```
 
 ## Configuration
 
-Before running the bot, configure these settings in `config.py`:
+### Setting Up config.py
 
-1. Wallet Configuration:
+1. Create a `config.py` file in the project directory
+2. Configure your EVM (Ethereum Virtual Machine) wallet address:
 ```python
-DEFAULT_WALLET = "YOUR_WALLET_ADDRESS"  # Replace with your EVM wallet address
+DEFAULT_WALLET = "YOUR_EVM_WALLET_ADDRESS"  # Replace with your EVM wallet address
 ```
 
-2. Proxy Configuration (Optional):
-```python
-PROXIES = {
-    "YOUR_PROXY_URL"  # Add your proxy URL if using one
-}
-```
+Important: Your wallet address must:
+- Start with "0x"
+- Be 42 characters long
+- Be a valid EVM-compatible address
 
-3. Point System Settings (Default values recommended):
-```python
-MAX_DAILY_POINTS = 200
-POINTS_PER_INTERACTION = 10
-```
+Other configuration parameters in `config.py`:
+- `MAX_DAILY_POINTS`: Maximum daily points (200)
+- `POINTS_PER_INTERACTION`: Points earned per interaction (10)
+- Security settings:
+  - `min_delay`: Minimum delay between requests (5.0s)
+  - `max_delay`: Maximum delay between requests (12.0s)
+  - `max_retries`: Maximum retry attempts (3)
+  - `cooldown_base`: Base cooldown period (30s)
 
 ## Usage
 
-1. Start the bot:
+1. Run the script:
 ```bash
-python main.py
+python bot.py
 ```
 
-2. When prompted, enter your wallet address or press Enter to use the default wallet.
+2. Enter your wallet address when prompted (or press Enter to use the default wallet)
 
 3. The bot will automatically:
-   - Rotate between AI assistants
-   - Ask predefined questions
-   - Track points and interactions
-   - Handle errors and retries
-   - Report usage statistics
+   - Manage daily interaction limits
+   - Rotate between different AI agents
+   - Use random questions from predefined sets
+   - Report usage and track points
+   - Handle errors and maintain session security
 
-## Troubleshooting
+## Known Behaviors
 
-### Common Issues
+### Report Interaction Messages
 
-1. Connection Timeout Error
+You may see messages like:
 ```
-Error: HTTPSConnectionPool: Read timed out, But Success! 
+Reporting interaction... ✗ Status: XXX (Points still counted)
 ```
-**Solution**: This is a known issue with the usage tracking server. The bot continues to function normally despite this error. No action required.
+or
+```
+Reporting interaction... ✗ Error: [error message] (Points still counted)
+```
 
-2. Proxy Connection Issues
-- Verify your proxy configuration in the config file
-- Ensure your proxy service is active
-- Check proxy credentials if required
+These messages are **normal** and **non-critical**. The bot will:
+- Continue running normally
+- Still count the interaction towards your daily total
+- Still earn points for the interaction
+- No action is required from your side
 
-3. Rate Limiting
-- The bot includes automatic handling for rate limits
-- Built-in cooldown periods between requests
-- Exponential backoff for retries
+## Features in Detail
 
-### Error Prevention
+### Security Measures
 
-1. Always use a stable internet connection
-2. Configure proper proxy settings if required
-3. Don't modify the cooldown and retry settings unless necessary
-4. Keep Python and required packages updated
-
-## Safety Features
-
-1. Rate Limiting Protection:
-- Automatic cooldown periods
-- Exponential backoff for retries
-- Maximum retry attempts
-
-2. Session Management:
-- Unique session IDs
+- Random delays between requests
+- Rotating user agents
+- Session management
 - Device fingerprinting
-- Automatic session recovery
+- Error handling and retry mechanisms
 
-3. Error Handling:
-- Connection timeout handling
-- Rate limit management
-- Critical error recovery
-- Graceful shutdown
+### Anti-Detection
 
-## Monitoring
+- Multiple browser profiles
+- Random user agent rotation
+- Varied request delays
+- Session ID management
+- Device ID generation
 
-The bot provides real-time statistics:
-- Current points earned
-- Total interactions
-- Success/failure rates
+### Interaction Management
+
+- Tracks daily interaction limits
+- Manages interaction cooldowns
+- Rotates questions to avoid repetition
+- Reports usage to API endpoints
+- Provides real-time statistics
+
+## Console Output
+
+The bot provides detailed console output with color coding:
+- Green: Success messages
+- Yellow: Warnings and notifications (including non-critical report errors)
+- Red: Errors and failures
+- Cyan: Information and statistics
+- Magenta: AI responses and interaction numbers
+- White: Questions and general text
+
+## Error Handling
+
+The bot implements comprehensive error handling:
+- Automatic session reset after multiple failures
+- Configurable retry strategy
+- Graceful shutdown on interruption
+- Session timeout handling
+- Network error recovery
+- Non-critical report errors are handled gracefully
+
+## Statistics and Tracking
+
+Provides real-time statistics including:
+- Total daily interactions
+- Remaining interactions
 - Session duration
-- Agent usage statistics
-
-## Best Practices
-
-1. Operation:
-- Run the bot on a stable network
-- Use a reliable proxy service if needed
-- Monitor the bot initially to ensure proper operation
-
-2. Maintenance:
-- Regularly update Python packages
-- Check for script updates
-- Monitor proxy health if using proxies
-
-3. Performance:
-- Don't modify default timings unless necessary
-- Keep logs for troubleshooting
-- Monitor system resources
-
-## Support
-
-For issues and updates:
-1. Check the troubleshooting section
-2. Report issues through GitHub
-3. Check for script updates regularly
-
-## Disclaimer
-
-This automation tool is not officially associated with Kite AI. Use at your own discretion and ensure compliance with all relevant terms of service.
+- Success/failure rates
+- Next reset time
 
 ## Security Notice
 
-- Never share your private keys or wallet seed phrases
-- Use environment variables or a configuration file to store sensitive information
-- Regularly monitor your wallet activities
-- Use a dedicated wallet for automation purposes
+This bot implements security best practices but should be used responsibly and in accordance with Kite AI's terms of service. Always ensure you have permission to use automated tools with any service.
+
+## Disclaimer
+
+This bot is provided as-is without any guarantees. Users are responsible for ensuring their use of the bot complies with Kite AI's terms of service and usage policies.
