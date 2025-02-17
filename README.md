@@ -34,7 +34,7 @@ pip install requests urllib3
 
 ### Setting Up config.py
 
-1. Create a `config.py` file in the project directory
+1. In the `config.py` file in the project directory
 2. Configure your EVM (Ethereum Virtual Machine) wallet address:
 ```python
 DEFAULT_WALLET = "YOUR_EVM_WALLET_ADDRESS"  # Replace with your EVM wallet address
