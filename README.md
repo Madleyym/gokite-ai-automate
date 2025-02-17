@@ -91,7 +91,7 @@ python main.py
 
 1. Connection Timeout Error
 ```
-Error: HTTPSConnectionPool: Read timed out
+Error: HTTPSConnectionPool: Read timed out, But Success! 
 ```
 **Solution**: This is a known issue with the usage tracking server. The bot continues to function normally despite this error. No action required.
 
