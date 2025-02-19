@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime, timedelta
 
 # Core configuration
-MAX_DAILY_POINTS = 200  # Updated from 1000 to 200
+MAX_DAILY_POINTS = 200
 POINTS_PER_INTERACTION = 10
 DEFAULT_WALLET = "YOUR_WALLET_ADDRESS"
 
@@ -11,9 +11,9 @@ DEFAULT_WALLET = "YOUR_WALLET_ADDRESS"
 SECURITY = {
     "min_delay": 5.0,
     "max_delay": 12.0,
-    "typing_speed": 0.05,  # New setting
+    "typing_speed": 0.05,
     "max_retries": 3,
-    "session_timeout": 3600,  # New setting
+    "session_timeout": 3600,
     "cooldown_base": 30,
 }
 
@@ -85,5 +85,5 @@ BROWSERS = [
     },
 ]
 
-# Add TIMEOUT_SETTINGS to prevent the previous error
+# Add TIMEOUT_SETTINGS
 TIMEOUT_SETTINGS = {"CONNECT": 60, "READ": 120}
