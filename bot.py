@@ -96,9 +96,11 @@ class KiteAIBot:
         """Print text safely with encoding handling."""
         try:
             if isinstance(text, str):
-                print(f"{color}{text.replace('\r', '')}{COLORS['RESET']}", end=end, flush=True)
+                cleaned_text = text.replace('\r', '')
+                print(f"{color}{cleaned_text}{COLORS['RESET']}", end=end, flush=True)
         except UnicodeEncodeError:
-            print(f"{color}{text.encode('ascii', 'replace').decode()}{COLORS['RESET']}", end=end, flush=True)
+            cleaned_text = text.replace('\r', '')
+            print(f"{color}{cleaned_text}{COLORS['RESET']}", end=end, flush=True)
 
     def _simulate_typing(self, text: str) -> None:
         """Simulate human typing patterns."""
