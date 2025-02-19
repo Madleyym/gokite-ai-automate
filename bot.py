@@ -6,8 +6,9 @@ import time
 import uuid
 import platform
 import requests
+import hashlib
 from datetime import datetime, timezone, timedelta
-from typing import Dict, Optional
+from typing import Dict, Optional, List, Tuple
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 from config import *
@@ -15,20 +16,31 @@ from config import *
 class KiteAIBot:
     def __init__(self, wallet_address: str):
         self.wallet_address = wallet_address
-        self.daily_interactions = 0  # Track daily interactions
+        self.daily_interactions = 0
         self.session_id = str(uuid.uuid4())
-        self.device_id = str(uuid.uuid4())  # Simplified device ID generation
+        self.device_id = self._generate_device_fingerprint()
         self.session = self._setup_session()
         self.used_questions = set()
         self.start_time = datetime.now()
         self.next_reset = self._get_next_reset_time()
-        
+        self.last_request_time = time.time()
+        self.request_count = 0
+
+    def _generate_device_fingerprint(self) -> str:
+        """Generate a sophisticated device fingerprint."""
+        components = [
+            str(uuid.uuid4()),
+            platform.system(),
+            platform.machine(),
+            str(time.time() // (24 * 3600))
+        ]
+        return hashlib.sha256(''.join(components).encode()).hexdigest()
+
     def _get_next_reset_time(self) -> datetime:
         """Calculate next reset time (midnight UTC)"""
         now = datetime.now(timezone.utc)
         tomorrow = now + timedelta(days=1)
-        return datetime(tomorrow.year, tomorrow.month, tomorrow.day, 
-                      tzinfo=timezone.utc)
+        return datetime(tomorrow.year, tomorrow.month, tomorrow.day, tzinfo=timezone.utc)
 
     def _setup_session(self) -> requests.Session:
         """Set up a new session with optimized retry strategy."""
@@ -55,13 +67,13 @@ class KiteAIBot:
         return browser["template"].format(version=version)
 
     def _get_headers(self) -> Dict:
-        """Generate request headers with anti-detection measures."""
-        return {
+        """Generate request headers with enhanced anti-detection."""
+        headers = {
             "Accept": "text/event-stream",
             "Accept-Language": random.choice([
                 "en-US,en;q=0.9",
-                "en-GB,en;q=0.8",
-                "en-CA,en;q=0.7"
+                "en-GB,en;q=0.8,es;q=0.6",
+                "en-CA,en;q=0.7,fr;q=0.3",
             ]),
             "Connection": "keep-alive",
             "Content-Type": "application/json",
@@ -69,18 +81,29 @@ class KiteAIBot:
             "Referer": "https://agents.testnet.gokite.ai/",
             "User-Agent": self._get_random_user_agent(),
             "X-Device-Fingerprint": self.device_id,
-            "X-Session-ID": self.session_id
+            "X-Session-ID": self.session_id,
+            "Cache-Control": "no-cache",
+            "Sec-Ch-Ua": f'"Not A(Brand";v="99", "Google Chrome";v="{random.randint(90, 120)}"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": random.choice(['"Windows"', '"macOS"']),
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
         }
+        return headers
 
     def safe_print(self, text: str, color: str = "", end: str = "\n") -> None:
         """Print text safely with encoding handling."""
         try:
             if isinstance(text, str):
-                print(f"{color}{text.replace('\r', '')}{COLORS['RESET']}", 
-                      end=end, flush=True)
+                print(f"{color}{text.replace('\r', '')}{COLORS['RESET']}", end=end, flush=True)
         except UnicodeEncodeError:
-            print(f"{color}{text.encode('ascii', 'replace').decode()}{COLORS['RESET']}", 
-                  end=end, flush=True)
+            print(f"{color}{text.encode('ascii', 'replace').decode()}{COLORS['RESET']}", end=end, flush=True)
+
+    def _simulate_typing(self, text: str) -> None:
+        """Simulate human typing patterns."""
+        for char in text:
+            time.sleep(random.uniform(0.02, 0.08))
 
     def _get_random_delay(self) -> float:
         """Get a randomized delay between actions."""
@@ -96,7 +119,7 @@ class KiteAIBot:
             self.daily_interactions = 0
             self.next_reset = self._get_next_reset_time()
             return True
-        return self.daily_interactions < 20  # Maximum 20 interactions per day
+        return self.daily_interactions < 20
 
     def report_usage(self, endpoint: str, question: str, response: str) -> bool:
         """Report usage with optimized error handling and friendly messages."""
@@ -138,7 +161,11 @@ class KiteAIBot:
         return f"{hours} hours and {minutes} minutes"
 
     def send_ai_query(self, endpoint: str, question: str) -> Optional[str]:
-        """Send a query to the AI endpoint with improved formatting."""
+        """Send a query to the AI endpoint with improved human-like behavior."""
+        # Simulate thinking and typing
+        time.sleep(random.uniform(1.5, 3.0))
+        self._simulate_typing(question)
+
         headers = self._get_headers()
         data = {
             "message": question,
@@ -168,11 +195,10 @@ class KiteAIBot:
 
             self.safe_print("✓", COLORS["GREEN"])
             self.safe_print("\nAI Response:", COLORS["CYAN"])
-            print()  # Tambah baris kosong untuk spacing
+            print()
 
             accumulated_response = []
             current_line = ""
-            formatted_text = ""
 
             for line in response.iter_lines():
                 if line:
@@ -184,25 +210,27 @@ class KiteAIBot:
                                 break
 
                             json_data = json.loads(json_str)
-                            content = (json_data.get("choices", [{}])[0]
-                                    .get("delta", {})
-                                    .get("content", ""))
-                            
+                            content = (
+                                json_data.get("choices", [{}])[0]
+                                .get("delta", {})
+                                .get("content", "")
+                            )
+
                             if content:
-                                # Menghapus karakter formatting yang tidak perlu
-                                content = (content.replace("**", "")
-                                                .replace("\n:", ":")
-                                                .replace(" :", ":")
-                                                .replace(".\n", ".")
-                                                .replace("\n.", "."))
-                                
+                                content = (
+                                    content.replace("**", "")
+                                    .replace("\n:", ":")
+                                    .replace(" :", ":")
+                                    .replace(".\n", ".")
+                                    .replace("\n.", ".")
+                                )
+
                                 if "\n" in content:
                                     parts = content.split("\n")
                                     for part in parts:
                                         part = part.strip()
                                         if part:
                                             if part.startswith(("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.")):
-                                                # Format list item
                                                 if current_line:
                                                     self.safe_print(current_line.strip(), COLORS["MAGENTA"])
                                                     accumulated_response.append(current_line.strip())
@@ -213,26 +241,74 @@ class KiteAIBot:
                                 else:
                                     current_line += content
 
-                                # Print jika menemukan akhir kalimat
-                                if any(current_line.rstrip().endswith(x) for x in [".","!","?"]):
+                                if any(current_line.rstrip().endswith(x) for x in [".", "!", "?"]):
                                     self.safe_print(current_line.strip(), COLORS["MAGENTA"])
                                     accumulated_response.append(current_line.strip())
                                     current_line = ""
-                                    
+                                    time.sleep(random.uniform(0.5, 1.0))  # Natural reading pause
+
                     except (json.JSONDecodeError, IndexError):
                         continue
 
-            # Print sisa konten
             if current_line:
                 self.safe_print(current_line.strip(), COLORS["MAGENTA"])
                 accumulated_response.append(current_line.strip())
 
-            print()  # Tambah baris kosong di akhir
+            print()
             return " ".join(accumulated_response)
 
         except Exception as e:
             self.safe_print(f"✗ Error: {str(e)}", COLORS["RED"])
             return None
+
+    def _get_random_question(self, endpoint: str) -> str:
+        """Get a random unused question."""
+        available_questions = [
+            q for q in AI_ENDPOINTS[endpoint]["questions"]
+            if q not in self.used_questions
+        ]
+        if not available_questions:
+            self.used_questions.clear()
+            available_questions = AI_ENDPOINTS[endpoint]["questions"]
+
+        question = random.choice(available_questions)
+        self.used_questions.add(question)
+        return question
+
+    def _print_banner(self) -> None:
+        """Print the initial banner."""
+        banner = """
+┌──────────────────────────────────────────────┐
+│               KITE AI AUTOMATE               │
+│          REPORT ON ISSUE IF NEEDED           │
+└──────────────────────────────────────────────┘
+        """
+        self.safe_print(banner, COLORS["CYAN"])
+        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        self.safe_print(f"Current Time (UTC): {current_time}", COLORS["GREEN"])
+        self.safe_print(f"Wallet: {self.wallet_address}\n", COLORS["GREEN"])
+
+    def _print_final_stats(self) -> None:
+        """Print final statistics."""
+        self.safe_print("\n=== Final Statistics ===", COLORS["CYAN"])
+        self.safe_print(
+            f"Total Interactions Today: {self.daily_interactions}/20",
+            COLORS["GREEN"]
+        )
+        self.safe_print(
+            f"Session Duration: {datetime.now() - self.start_time}",
+            COLORS["YELLOW"]
+        )
+        if self.daily_interactions >= 20:
+            wait_time = self.get_wait_time()
+            self.safe_print(
+                f"Daily limit reached. Next reset in {wait_time}",
+                COLORS["YELLOW"]
+            )
+        self.safe_print(
+            "\nSession ended. Thank you for using Kite AI Bot!",
+            COLORS["YELLOW"]
+        )
 
     def run(self) -> None:
         """Main bot operation loop with daily interaction limit."""
@@ -249,13 +325,12 @@ class KiteAIBot:
                             f"Waiting {wait_time} for next reset...",
                             COLORS["YELLOW"]
                         )
-                        # Check every minute if it's time to reset
-                        time.sleep(60)
+                        time.sleep(60)  # Check every minute if it's time to reset
                         continue
 
                     self.safe_print("\n" + "=" * 50, COLORS["CYAN"])
                     self.safe_print(
-                        f"Interaction #{self.daily_interactions + 1}", 
+                        f"Interaction #{self.daily_interactions + 1}",
                         COLORS["MAGENTA"]
                     )
                     self.safe_print(
@@ -274,12 +349,10 @@ class KiteAIBot:
 
                     response = self.send_ai_query(endpoint, question)
                     if response:
-                        # Always increment interactions counter even if reporting fails
                         self.report_usage(endpoint, question, response)
                         self.daily_interactions += 1
                         consecutive_failures = 0
-                        
-                        # If we've hit 20 interactions, show clear message
+
                         if self.daily_interactions >= 20:
                             wait_time = self.get_wait_time()
                             self.safe_print(
@@ -289,9 +362,9 @@ class KiteAIBot:
                                 f"Bot will resume in {wait_time}",
                                 COLORS["YELLOW"]
                             )
-                            time.sleep(60)  # Check every minute for reset
+                            time.sleep(60)
                             continue
-                        
+
                         delay = self._get_random_delay()
                         self.safe_print(
                             f"\nNext query in {delay:.1f} seconds...",
@@ -303,7 +376,7 @@ class KiteAIBot:
 
                     if consecutive_failures >= SECURITY["max_retries"]:
                         self.safe_print(
-                            "Too many failures. Resetting session...", 
+                            "Too many failures. Resetting session...",
                             COLORS["RED"]
                         )
                         self.session = self._setup_session()
@@ -318,55 +391,6 @@ class KiteAIBot:
         except KeyboardInterrupt:
             self._print_final_stats()
 
-    def _print_banner(self) -> None:
-        """Print the initial banner."""
-        banner = """
-┌──────────────────────────────────────────────┐
-│               KITE AI AUTOMATE               │
-│          REPORT ON ISSUE IF NEEDED           │
-└──────────────────────────────────────────────┘
-        """
-        self.safe_print(banner, COLORS["CYAN"])
-        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
-        self.safe_print(f"Current Time (UTC): {current_time}", COLORS["GREEN"])
-        self.safe_print(f"Wallet: {self.wallet_address}\n", COLORS["GREEN"])
-
-    def _get_random_question(self, endpoint: str) -> str:
-        """Get a random unused question."""
-        available_questions = [
-            q for q in AI_ENDPOINTS[endpoint]["questions"]
-            if q not in self.used_questions
-        ]
-        if not available_questions:
-            self.used_questions.clear()
-            available_questions = AI_ENDPOINTS[endpoint]["questions"]
-
-        question = random.choice(available_questions)
-        self.used_questions.add(question)
-        return question
-
-    def _print_final_stats(self) -> None:
-        """Print final statistics."""
-        self.safe_print("\n=== Final Statistics ===", COLORS["CYAN"])
-        self.safe_print(
-            f"Total Interactions Today: {self.daily_interactions}/20", 
-            COLORS["GREEN"]
-        )
-        self.safe_print(
-            f"Session Duration: {datetime.now() - self.start_time}", 
-            COLORS["YELLOW"]
-        )
-        if self.daily_interactions >= 20:
-            wait_time = self.get_wait_time()
-            self.safe_print(
-                f"Daily limit reached. Next reset in {wait_time}",
-                COLORS["YELLOW"]
-            )
-        self.safe_print(
-            "\nSession ended. Thank you for using Kite AI Bot!", 
-            COLORS["YELLOW"]
-        )
-
 def main() -> None:
     """Main entry point with enhanced security and Termux support."""
     try:
@@ -376,9 +400,15 @@ def main() -> None:
             os.system("chcp 65001")
 
         print(f"{COLORS['CYAN']}=== KITE AI BOT SESSION INFO ==={COLORS['RESET']}")
-        print(f"{COLORS['GREEN']}Started at (UTC): {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}{COLORS['RESET']}")
-        print(f"{COLORS['GREEN']}System: {platform.system()} {platform.release()}{COLORS['RESET']}")
-        print(f"{COLORS['GREEN']}Python: {platform.python_version()}\n{COLORS['RESET']}")
+        print(
+            f"{COLORS['GREEN']}Started at (UTC): {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')}{COLORS['RESET']}"
+        )
+        print(
+            f"{COLORS['GREEN']}System: {platform.system()} {platform.release()}{COLORS['RESET']}"
+        )
+        print(
+            f"{COLORS['GREEN']}Python: {platform.python_version()}\n{COLORS['RESET']}"
+        )
 
         wallet_input = input(
             f"{COLORS['YELLOW']}Enter your registered Wallet Address "
@@ -388,8 +418,12 @@ def main() -> None:
         wallet_address = wallet_input if wallet_input else DEFAULT_WALLET
 
         if not wallet_address.startswith("0x") or len(wallet_address) != 42:
-            print(f"{COLORS['RED']}Warning: Wallet address format may be invalid{COLORS['RESET']}")
-            confirm = input(f"{COLORS['YELLOW']}Continue anyway? (y/n): {COLORS['RESET']}").lower()
+            print(
+                f"{COLORS['RED']}Warning: Wallet address format may be invalid{COLORS['RESET']}"
+            )
+            confirm = input(
+                f"{COLORS['YELLOW']}Continue anyway? (y/n): {COLORS['RESET']}"
+            ).lower()
             if confirm != "y":
                 print(f"{COLORS['RED']}Exiting...{COLORS['RESET']}")
                 sys.exit(0)
@@ -400,8 +434,12 @@ def main() -> None:
         print(f"{COLORS['GREEN']}Session ID: {bot.session_id[:8]}...{COLORS['RESET']}")
         print(f"{COLORS['GREEN']}Device ID: {bot.device_id[:8]}...{COLORS['RESET']}")
         print(f"{COLORS['GREEN']}Anti-Detection: Enabled{COLORS['RESET']}")
-        print(f"{COLORS['GREEN']}Request Delay: {SECURITY['min_delay']}-{SECURITY['max_delay']}s{COLORS['RESET']}")
-        print(f"\n{COLORS['YELLOW']}Press Enter to start or Ctrl+C to exit...{COLORS['RESET']}")
+        print(
+            f"{COLORS['GREEN']}Request Delay: {SECURITY['min_delay']}-{SECURITY['max_delay']}s{COLORS['RESET']}"
+        )
+        print(
+            f"\n{COLORS['YELLOW']}Press Enter to start or Ctrl+C to exit...{COLORS['RESET']}"
+        )
         input()
 
         bot.run()
