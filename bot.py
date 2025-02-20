@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import json
 import random
@@ -163,7 +164,7 @@ class KiteAIBot:
         return f"{hours} hours and {minutes} minutes"
 
     def send_ai_query(self, endpoint: str, question: str) -> Optional[str]:
-        """Send a query to the AI endpoint with improved human-like behavior."""
+        """Send a query to the AI endpoint with improved response formatting."""
         # Simulate thinking and typing
         time.sleep(random.uniform(1.5, 3.0))
         self._simulate_typing(question)
@@ -201,6 +202,7 @@ class KiteAIBot:
 
             accumulated_response = []
             current_line = ""
+            is_list_item = False
 
             for line in response.iter_lines():
                 if line:
@@ -223,35 +225,50 @@ class KiteAIBot:
                                     content.replace("**", "")
                                     .replace("\n:", ":")
                                     .replace(" :", ":")
-                                    .replace(".\n", ".")
-                                    .replace("\n.", ".")
                                 )
 
-                                if "\n" in content:
-                                    parts = content.split("\n")
-                                    for part in parts:
-                                        part = part.strip()
-                                        if part:
-                                            if part.startswith(("1.", "2.", "3.", "4.", "5.", "6.", "7.", "8.")):
-                                                if current_line:
-                                                    self.safe_print(current_line.strip(), COLORS["MAGENTA"])
-                                                    accumulated_response.append(current_line.strip())
-                                                    current_line = ""
-                                                current_line = part
-                                            else:
-                                                current_line += " " + part
+                                # Check for numbered list items
+                                if re.match(r'^\d+\.', content.strip()):
+                                    if current_line:
+                                        self.safe_print(current_line.strip(), COLORS["MAGENTA"])
+                                        accumulated_response.append(current_line.strip())
+                                    current_line = "\n" + content
+                                    is_list_item = True
                                 else:
-                                    current_line += content
+                                    # Handle regular text
+                                    if "\n" in content:
+                                        parts = content.split("\n")
+                                        for part in parts:
+                                            part = part.strip()
+                                            if part:
+                                                if re.match(r'^\d+\.', part):
+                                                    if current_line:
+                                                        self.safe_print(current_line.strip(), COLORS["MAGENTA"])
+                                                        accumulated_response.append(current_line.strip())
+                                                    current_line = "\n" + part
+                                                    is_list_item = True
+                                                else:
+                                                    if is_list_item and not current_line.endswith(" "):
+                                                        current_line += " "
+                                                    current_line += part
+                                    else:
+                                        if is_list_item and not current_line.endswith(" "):
+                                            current_line += " "
+                                        current_line += content
 
+                                # Print completed sentences or list items
                                 if any(current_line.rstrip().endswith(x) for x in [".", "!", "?"]):
-                                    self.safe_print(current_line.strip(), COLORS["MAGENTA"])
-                                    accumulated_response.append(current_line.strip())
-                                    current_line = ""
-                                    time.sleep(random.uniform(0.5, 1.0))  # Natural reading pause
+                                    if not is_list_item or (is_list_item and len(current_line.strip()) > 10):
+                                        self.safe_print(current_line.strip(), COLORS["MAGENTA"])
+                                        accumulated_response.append(current_line.strip())
+                                        current_line = ""
+                                        is_list_item = False
+                                        time.sleep(random.uniform(0.3, 0.7))  # Natural reading pause
 
                     except (json.JSONDecodeError, IndexError):
                         continue
 
+            # Print any remaining text
             if current_line:
                 self.safe_print(current_line.strip(), COLORS["MAGENTA"])
                 accumulated_response.append(current_line.strip())
