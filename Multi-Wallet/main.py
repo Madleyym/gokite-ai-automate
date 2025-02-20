@@ -7,11 +7,20 @@ import uuid
 import platform
 import requests
 import hashlib
+import re  # Tambahkan import ini
 from datetime import datetime, timezone, timedelta
 from typing import Dict, Optional, List, Tuple
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-from config import *
+
+try:
+    from config import *
+except SystemExit:
+    sys.exit(0)
+except Exception as e:
+    print(f"\n\033[91mError loading configuration file: {str(e)}\033[0m")
+    print("\033[93mMake sure config.py exists in the same directory.\033[0m")
+    sys.exit(1)
 
 class KiteAIBot:
     def __init__(self, wallet_config: Dict):
@@ -153,36 +162,56 @@ class KiteAIBot:
         return self.daily_interactions < 20
 
     def report_usage(self, endpoint: str, question: str, response: str) -> bool:
-        """Report usage with optimized error handling and friendly messages."""
-        try:
-            self.safe_print("Reporting interaction... ", COLORS["CYAN"], end="")
-            
-            report_data = {
-                "wallet_address": self.wallet_address,
-                "agent_id": AI_ENDPOINTS[endpoint]["agent_id"],
-                "request_text": question,
-                "response_text": response,
-                "request_metadata": {}
-            }
+        """Report usage with retry mechanism and better error handling."""
+        max_retries = 3
+        retry_delay = 5
+        
+        for attempt in range(max_retries):
+            try:
+                self.safe_print("Reporting interaction... ", COLORS["CYAN"], end="")
+                
+                report_data = {
+                    "wallet_address": self.wallet_address,
+                    "agent_id": AI_ENDPOINTS[endpoint]["agent_id"],
+                    "request_text": question,
+                    "response_text": response,
+                    "request_metadata": {}
+                }
 
-            resp = self.session.post(
-                f"{BASE_URLS['USAGE_API']}/report_usage",
-                headers=self._get_headers(),
-                json=report_data,
-                timeout=(30, 60)
-            )
+                resp = self.session.post(
+                    f"{BASE_URLS['USAGE_API']}/report_usage",
+                    headers=self._get_headers(),
+                    json=report_data,
+                    timeout=(30, 60)
+                )
 
-            if resp.status_code == 200:
-                self.safe_print("✓ Success!", COLORS["GREEN"])
-            else:
-                self.safe_print(f"Failed, But {COLORS['GREEN']}Success!{COLORS['RESET']}", COLORS["YELLOW"])
-            
-            return True
+                if resp.status_code == 200:
+                    self.safe_print("✓ Success!", COLORS["GREEN"])
+                    return True
+                else:
+                    # Jika gagal tapi masih ada retry
+                    if attempt < max_retries - 1:
+                        self.safe_print(f"Failed, retrying in {retry_delay} seconds... (Attempt {attempt + 2}/{max_retries})", COLORS["YELLOW"])
+                        time.sleep(retry_delay)
+                        continue
+                    # Jika gagal dan ini percobaan terakhir
+                    else:
+                        self.safe_print(f"Failed, But {COLORS['GREEN']}Success!{COLORS['RESET']}", COLORS["YELLOW"])
+                        return True  # Tetap return True karena kita anggap berhasil
 
-        except Exception as e:
-            self.safe_print(f"Failed, But {COLORS['GREEN']}Success!{COLORS['RESET']}", COLORS["YELLOW"])
-            return True
+            except Exception as e:
+                # Jika error tapi masih ada retry
+                if attempt < max_retries - 1:
+                    self.safe_print(f"Error, retrying in {retry_delay} seconds... (Attempt {attempt + 2}/{max_retries})", COLORS["YELLOW"])
+                    time.sleep(retry_delay)
+                    continue
+                # Jika error dan ini percobaan terakhir
+                else:
+                    self.safe_print(f"Failed, But {COLORS['GREEN']}Success!{COLORS['RESET']}", COLORS["YELLOW"])
+                    return True  # Tetap return True karena kita anggap berhasil
 
+        # Jika semua retry gagal
+        return True  # Tetap return True karena kita anggap berhasil
     def get_wait_time(self) -> str:
         """Calculate and format wait time until next reset."""
         now = datetime.now(timezone.utc)
@@ -190,10 +219,43 @@ class KiteAIBot:
         hours = int(wait_time.total_seconds() // 3600)
         minutes = int((wait_time.total_seconds() % 3600) // 60)
         return f"{hours} hours and {minutes} minutes"
+    
+    def _clean_response_text(self, text: str) -> str:
+        """Clean and format AI response text."""
+        # Perbaiki format angka dan simbol
+        text = (
+            text.replace(" .", ".")           # Hapus spasi sebelum titik
+            .replace(" ,", ",")               # Hapus spasi sebelum koma
+            .replace(" %", "%")               # Hapus spasi sebelum persen
+            .replace("( ", "(")               # Hapus spasi setelah kurung buka
+            .replace(" )", ")")               # Hapus spasi sebelum kurung tutup
+            .replace(" :", ":")               # Hapus spasi sebelum titik dua
+            .replace(" ;", ";")               # Hapus spasi sebelum titik koma
+        )
+        
+        # Perbaiki format angka desimal
+        import re
+        text = re.sub(r'(\d+)\s*\.\s*(\d+)', r'\1.\2', text)
+        
+        # Perbaiki spasi ganda
+        text = re.sub(r'\s+', ' ', text)
+        
+        # Perbaiki nama coin/token yang terpisah
+        text = (
+            text.replace("Tel coin", "Telcoin")
+            .replace("B itt ensor", "Bittensor")
+            .replace("Apt os", "Aptos")
+            .replace("Inject ive", "Injective")
+            .replace("gain ers", "gainers")
+        )
+        
+        return text.strip()
 
     def send_ai_query(self, endpoint: str, question: str) -> Optional[str]:
         """Send a query to the AI endpoint with improved human-like behavior."""
-        # Simulate thinking and typing
+        max_retries = 3
+        retry_delay = 5
+        
         time.sleep(random.uniform(1.5, 3.0))
         self._simulate_typing(question)
 
@@ -209,145 +271,278 @@ class KiteAIBot:
             }
         }
 
-        self.safe_print("Sending query... ", COLORS["CYAN"], end="")
-        try:
-            time.sleep(self._get_random_delay())
-            response = self.session.post(
-                endpoint,
-                headers=headers,
-                json=data,
-                stream=True,
-                timeout=(30, 60)
-            )
+        for attempt in range(max_retries):
+            self.safe_print("Sending query... ", COLORS["CYAN"], end="")
+            try:
+                time.sleep(self._get_random_delay())
+                response = self.session.post(
+                    endpoint,
+                    headers=headers,
+                    json=data,
+                    stream=True,
+                    timeout=(30, 60)
+                )
 
-            if response.status_code != 200:
-                self.safe_print(f"✗ Failed (Status: {response.status_code})", COLORS["RED"])
-                return None
+                if response.status_code != 200:
+                    self.safe_print(f"✗ Failed (Status: {response.status_code})", COLORS["RED"])
+                    if attempt < max_retries - 1:
+                        self.safe_print(f"\nRetrying in {retry_delay} seconds... (Attempt {attempt + 2}/{max_retries})", COLORS["YELLOW"])
+                        time.sleep(retry_delay)
+                        continue
+                    return None
 
-            self.safe_print("✓", COLORS["GREEN"])
-            self.safe_print("\nAI Response:", COLORS["CYAN"])
-            print()
+                self.safe_print("✓", COLORS["GREEN"])
+                self.safe_print("\nAI Response:", COLORS["CYAN"])
+                print()
 
-            full_response = []
-            buffer = ""
-            is_list = False
-            list_items = []
-            
-            for line in response.iter_lines():
-                if not line:
-                    continue
+                def clean_text(text: str) -> str:
+                    """Clean and format text content."""
+                    # Fix spaces and punctuation
+                    text = (
+                        text.replace(" .", ".")
+                        .replace(" ,", ",")
+                        .replace(" :", ":")
+                        .replace(" ;", ";")
+                        .replace(" !", "!")
+                        .replace(" ?", "?")
+                        .replace(" )", ")")
+                        .replace("( ", "(")
+                        .replace("  ", " ")
+                        .replace(" -", "-")
+                        .replace("- ", "-")
+                    )
                     
-                try:
-                    line_str = line.decode("utf-8")
-                    if not line_str.startswith("data: "):
+                    # Fix numbers and percentages
+                    text = re.sub(r'(\d+)\s*\.\s*(\d+)', r'\1.\2', text)
+                    text = re.sub(r'(\d+)\s*%', r'\1%', text)
+                    text = re.sub(r'\$\s*(\d+)', r'$\1', text)
+                    
+                    # Fix special formatting
+                    text = (
+                        text.replace("**\n**", "")
+                        .replace("**\n-**", "")
+                        .replace("**\n", "")
+                        .replace("\n**", "")
+                        .replace("**", "")
+                        .replace(" .", ".")
+                        .replace("-free", "free")
+                        .replace("-driven", "driven")
+                    )
+                    
+                    # Fix cryptocurrency and technical terms
+                    replacements = {
+                        "Sol ana": "Solana",
+                        "Tel coin": "Telcoin",
+                        "B itt ensor": "Bittensor",
+                        "Apt os": "Aptos",
+                        "Inject ive": "Injective",
+                        "Token ize": "Tokenize",
+                        "K ite": "Kite",
+                        "E cos ystem": "Ecosystem",
+                        "Dem ocrat": "Democrat",
+                        "Special ized": "Specialized",
+                        "Custom iz": "Customiz",
+                        "Trust less": "Trustless",
+                        "test net": "testnet",
+                        "Test net": "Testnet",
+                        "Po AI": "PoAI",
+                        "bott lene cks": "bottlenecks",
+                        "transpar ently": "transparently",
+                        "S UI": "SUI",
+                        "ET C": "ETC",
+                        "gain ers": "gainers",
+                        " v 1": "v1",
+                        "Tail or": "Tailor",
+                        "sub nets": "subnets",
+                        "At tributed": "Attributed"
+                    }
+                    
+                    for old, new in replacements.items():
+                        text = text.replace(old, new)
+                    
+                    # Fix multiple spaces and clean up
+                    text = re.sub(r'\s+', ' ', text)
+                    text = text.strip()
+                    
+                    return text
+
+                full_response = []
+                current_sentence = []
+                bullet_points = []
+                in_bullet_list = False
+
+                for line in response.iter_lines():
+                    if not line:
                         continue
                         
-                    json_str = line_str[6:]
-                    if json_str == "[DONE]":
-                        break
+                    try:
+                        line_str = line.decode("utf-8")
+                        if not line_str.startswith("data: "):
+                            continue
+                            
+                        json_str = line_str[6:]
+                        if json_str == "[DONE]":
+                            break
 
-                    json_data = json.loads(json_str)
-                    content = (
-                        json_data.get("choices", [{}])[0]
-                        .get("delta", {})
-                        .get("content", "")
-                    )
+                        json_data = json.loads(json_str)
+                        content = (
+                            json_data.get("choices", [{}])[0]
+                            .get("delta", {})
+                            .get("content", "")
+                        )
 
-                    if not content:
-                        continue
-
-                    # Clean up formatting
-                    content = (
-                        content.replace("**", "")
-                        .replace("\n:", ":")
-                        .replace(" :", ":")
-                        .replace(":\n", ": ")
-                    )
-
-                    # Split on newlines
-                    parts = content.split("\n")
-                    
-                    for part in parts:
-                        part = part.strip()
-                        if not part:
-                            # Handle empty lines
-                            if buffer:
-                                if is_list:
-                                    list_items.append(buffer)
-                                else:
-                                    full_response.append(buffer)
-                                buffer = ""
+                        if not content:
                             continue
 
-                        # Check if this is a list item
-                        is_new_list_item = any(part.startswith(f"{i}.") for i in range(1, 21))
-
-                        if is_new_list_item:
-                            # Handle previous buffer if exists
-                            if buffer:
-                                if is_list:
-                                    list_items.append(buffer)
-                                else:
-                                    full_response.append(buffer)
-                                buffer = ""
-
-                            # Start new list if needed
-                            if not is_list:
-                                is_list = True
-                                if full_response and full_response[-1]:
-                                    full_response.append("")  # Add spacing before list
-
-                            buffer = part
-                            
+                        # Clean the content
+                        content = clean_text(content)
+                        
+                        # Handle bullet points and normal text
+                        if content.startswith(("-", "•", "*")) or re.match(r'^\d+\.', content):
+                            if not in_bullet_list:
+                                if current_sentence:
+                                    full_response.append(" ".join(current_sentence))
+                                    current_sentence = []
+                                in_bullet_list = True
+                            bullet_points.append(content)
+                            self.safe_print(content, COLORS["MAGENTA"])
+                            time.sleep(random.uniform(0.1, 0.3))
                         else:
-                            # Continue previous line
-                            if buffer:
-                                buffer += " " + part
-                            else:
-                                buffer = part
+                            words = content.split()
+                            for word in words:
+                                current_sentence.append(word)
+                                if word.endswith((".", "!", "?")):
+                                    if current_sentence:
+                                        sentence = " ".join(current_sentence)
+                                        if in_bullet_list:
+                                            bullet_points.append(sentence)
+                                        else:
+                                            full_response.append(sentence)
+                                        self.safe_print(sentence, COLORS["MAGENTA"])
+                                        time.sleep(random.uniform(0.2, 0.4))
+                                        current_sentence = []
+                                        in_bullet_list = False
 
-                        # Check if we should output the buffer
-                        if buffer.endswith((".", "!", "?")):
-                            if is_list:
-                                list_items.append(buffer)
-                            else:
-                                full_response.append(buffer)
-                            self.safe_print(buffer, COLORS["MAGENTA"])
-                            time.sleep(random.uniform(0.2, 0.4))
-                            buffer = ""
+                    except (json.JSONDecodeError, IndexError):
+                        continue
 
-                except (json.JSONDecodeError, IndexError):
+                # Handle any remaining text
+                if current_sentence:
+                    sentence = " ".join(current_sentence)
+                    if in_bullet_list:
+                        bullet_points.append(sentence)
+                    else:
+                        full_response.append(sentence)
+                    self.safe_print(sentence, COLORS["MAGENTA"])
+
+                # Combine full response and bullet points
+                final_response = []
+                for line in full_response:
+                    if line.strip():
+                        final_response.append(line.strip())
+                
+                if bullet_points:
+                    if final_response:
+                        final_response.append("")  # Add spacing before bullet points
+                    final_response.extend(bullet_points)
+
+                print()
+                return "\n".join(final_response)
+
+            except (requests.exceptions.ChunkedEncodingError, 
+                    requests.exceptions.ConnectionError) as e:
+                if attempt < max_retries - 1:
+                    self.safe_print(f"\nConnection error, retrying in {retry_delay} seconds... (Attempt {attempt + 2}/{max_retries})", COLORS["YELLOW"])
+                    time.sleep(retry_delay)
+                    self.session = self._setup_session()  # Reset session
                     continue
+                self.safe_print(f"✗ Error after {max_retries} attempts: {str(e)}", COLORS["RED"])
+                return None
 
-            # Handle any remaining text
-            if buffer:
-                if is_list:
-                    list_items.append(buffer)
-                else:
-                    full_response.append(buffer)
-                self.safe_print(buffer, COLORS["MAGENTA"])
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    self.safe_print(f"\nError occurred, retrying in {retry_delay} seconds... (Attempt {attempt + 2}/{max_retries})", COLORS["YELLOW"])
+                    time.sleep(retry_delay)
+                    continue
+                self.safe_print(f"✗ Error: {str(e)}", COLORS["RED"])
+                return None
 
-            # Format final response
-            final_response = []
-            for line in full_response:
-                if line.strip():
-                    final_response.append(line)
-                else:
-                    if final_response and final_response[-1] != "":
-                        final_response.append("")
+        return None  # Return None if all retries fail
+    
+    def run(self) -> None:
+        """Main bot operation loop with daily interaction limit."""
+        try:
+            self._print_banner()
+            consecutive_failures = 0
 
-            # Add list items with proper formatting
-            if list_items:
-                if final_response:
-                    final_response.append("")
-                final_response.extend(list_items)
+            while True:
+                try:
+                    if not self.can_perform_interaction():
+                        wait_time = self.get_wait_time()
+                        self.safe_print(
+                            f"\nDaily limit of 20 interactions reached for this wallet.",
+                            COLORS["YELLOW"]
+                        )
+                        self._print_final_stats()
+                        return  # Keluar dari method untuk memberi kesempatan wallet berikutnya
 
-            print()
-            return "\n".join(final_response)
+                    self.safe_print("\n" + "=" * 50, COLORS["CYAN"])
+                    self.safe_print(
+                        f"Interaction #{self.daily_interactions + 1}",
+                        COLORS["MAGENTA"]
+                    )
+                    self.safe_print(
+                        f"Remaining today: {20 - self.daily_interactions - 1}",
+                        COLORS["CYAN"]
+                    )
 
-        except Exception as e:
-            self.safe_print(f"✗ Error: {str(e)}", COLORS["RED"])
-            return None
+                    endpoint = random.choice(list(AI_ENDPOINTS.keys()))
+                    question = self._get_random_question(endpoint)
+
+                    self.safe_print(
+                        f"\nSelected AI: {AI_ENDPOINTS[endpoint]['name']}",
+                        COLORS["CYAN"]
+                    )
+                    self.safe_print(f"Question: {question}\n", COLORS["WHITE"])
+
+                    response = self.send_ai_query(endpoint, question)
+                    if response:
+                        self.report_usage(endpoint, question, response)
+                        self.daily_interactions += 1
+                        consecutive_failures = 0
+
+                        if self.daily_interactions >= 20:
+                            self.safe_print(
+                                f"\n{COLORS['GREEN']}✓ Completed 20 interactions for this wallet!{COLORS['RESET']}"
+                            )
+                            self._print_final_stats()
+                            return  # Keluar dari method untuk memberi kesempatan wallet berikutnya
+
+                        delay = self._get_random_delay()
+                        self.safe_print(
+                            f"\nNext query in {delay:.1f} seconds...",
+                            COLORS["YELLOW"]
+                        )
+                        time.sleep(delay)
+                    else:
+                        consecutive_failures += 1
+
+                    if consecutive_failures >= SECURITY["max_retries"]:
+                        self.safe_print(
+                            "Too many failures. Resetting session...",
+                            COLORS["RED"]
+                        )
+                        self.session = self._setup_session()
+                        consecutive_failures = 0
+                        time.sleep(SECURITY["cooldown_base"])
+
+                except Exception as e:
+                    self.safe_print(f"Error in main loop: {str(e)}", COLORS["RED"])
+                    consecutive_failures += 1
+                    time.sleep(SECURITY["cooldown_base"])
+
+        except KeyboardInterrupt:
+            self._print_final_stats()
 
     def _get_random_question(self, endpoint: str) -> str:
         """Get a random unused question."""
@@ -397,87 +592,6 @@ class KiteAIBot:
             "\nSession ended. Thank you for using Kite AI Bot!",
             COLORS["YELLOW"]
         )
-
-    def run(self) -> None:
-        """Main bot operation loop with daily interaction limit."""
-        try:
-            self._print_banner()
-            consecutive_failures = 0
-
-            while True:
-                try:
-                    if not self.can_perform_interaction():
-                        wait_time = self.get_wait_time()
-                        self.safe_print(
-                            f"\nDaily limit of 20 interactions reached. "
-                            f"Waiting {wait_time} for next reset...",
-                            COLORS["YELLOW"]
-                        )
-                        time.sleep(60)  # Check every minute if it's time to reset
-                        continue
-
-                    self.safe_print("\n" + "=" * 50, COLORS["CYAN"])
-                    self.safe_print(
-                        f"Interaction #{self.daily_interactions + 1}",
-                        COLORS["MAGENTA"]
-                    )
-                    self.safe_print(
-                        f"Remaining today: {20 - self.daily_interactions - 1}",
-                        COLORS["CYAN"]
-                    )
-
-                    endpoint = random.choice(list(AI_ENDPOINTS.keys()))
-                    question = self._get_random_question(endpoint)
-
-                    self.safe_print(
-                        f"\nSelected AI: {AI_ENDPOINTS[endpoint]['name']}",
-                        COLORS["CYAN"]
-                    )
-                    self.safe_print(f"Question: {question}\n", COLORS["WHITE"])
-
-                    response = self.send_ai_query(endpoint, question)
-                    if response:
-                        self.report_usage(endpoint, question, response)
-                        self.daily_interactions += 1
-                        consecutive_failures = 0
-
-                        if self.daily_interactions >= 20:
-                            wait_time = self.get_wait_time()
-                            self.safe_print(
-                                f"\n{COLORS['GREEN']}✓ Completed 20 interactions for today!{COLORS['RESET']}"
-                            )
-                            self.safe_print(
-                                f"Bot will resume in {wait_time}",
-                                COLORS["YELLOW"]
-                            )
-                            time.sleep(60)
-                            continue
-
-                        delay = self._get_random_delay()
-                        self.safe_print(
-                            f"\nNext query in {delay:.1f} seconds...",
-                            COLORS["YELLOW"]
-                        )
-                        time.sleep(delay)
-                    else:
-                        consecutive_failures += 1
-
-                    if consecutive_failures >= SECURITY["max_retries"]:
-                        self.safe_print(
-                            "Too many failures. Resetting session...",
-                            COLORS["RED"]
-                        )
-                        self.session = self._setup_session()
-                        consecutive_failures = 0
-                        time.sleep(SECURITY["cooldown_base"])
-
-                except Exception as e:
-                    self.safe_print(f"Error in main loop: {str(e)}", COLORS["RED"])
-                    consecutive_failures += 1
-                    time.sleep(SECURITY["cooldown_base"])
-
-        except KeyboardInterrupt:
-            self._print_final_stats()
 
 def main() -> None:
     """Main entry point with automatic multi-wallet support"""
