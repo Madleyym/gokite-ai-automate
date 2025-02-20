@@ -54,7 +54,7 @@ WALLET_CONFIGS = [
 1. Configure your wallets and proxies in `config.py`
 2. Run the multi-wallet bot:
 ```bash
-python multi_wallet.py
+python main.py
 ```
 
 ## Daily Limits
