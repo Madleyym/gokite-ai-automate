@@ -228,95 +228,122 @@ class KiteAIBot:
             self.safe_print("\nAI Response:", COLORS["CYAN"])
             print()
 
-            accumulated_response = []
-            current_line = ""
-            in_list = False
-            list_count = 0
-
+            full_response = []
+            buffer = ""
+            is_list = False
+            list_items = []
+            
             for line in response.iter_lines():
-                if line:
-                    try:
-                        line_str = line.decode("utf-8")
-                        if line_str.startswith("data: "):
-                            json_str = line_str[6:]
-                            if json_str == "[DONE]":
-                                break
+                if not line:
+                    continue
+                    
+                try:
+                    line_str = line.decode("utf-8")
+                    if not line_str.startswith("data: "):
+                        continue
+                        
+                    json_str = line_str[6:]
+                    if json_str == "[DONE]":
+                        break
 
-                            json_data = json.loads(json_str)
-                            content = (
-                                json_data.get("choices", [{}])[0]
-                                .get("delta", {})
-                                .get("content", "")
-                            )
+                    json_data = json.loads(json_str)
+                    content = (
+                        json_data.get("choices", [{}])[0]
+                        .get("delta", {})
+                        .get("content", "")
+                    )
 
-                            if content:
-                                # Clean up formatting
-                                content = (
-                                    content.replace("**", "")
-                                    .replace("\n:", ":")
-                                    .replace(" :", ":")
-                                )
-
-                                # Handle line breaks and lists
-                                if "\n" in content:
-                                    parts = content.split("\n")
-                                    for part in parts:
-                                        part = part.strip()
-                                        if not part:
-                                            continue
-
-                                        # Check for list items
-                                        is_list_item = any(part.startswith(f"{i}.") for i in range(1, 21))
-                                        
-                                        if is_list_item:
-                                            # If we have pending text, print it
-                                            if current_line:
-                                                self.safe_print(current_line.strip(), COLORS["MAGENTA"])
-                                                accumulated_response.append(current_line.strip())
-                                                current_line = ""
-
-                                            in_list = True
-                                            list_count += 1
-                                            # Add newline before first list item
-                                            if list_count == 1:
-                                                self.safe_print("", COLORS["MAGENTA"])
-                                                accumulated_response.append("")
-                                            current_line = part
-                                        else:
-                                            if in_list and current_line:
-                                                # This is continuation of a list item
-                                                current_line += " " + part
-                                            else:
-                                                # Regular text
-                                                in_list = False
-                                                if current_line:
-                                                    current_line += " " + part
-                                                else:
-                                                    current_line = part
-
-                                        # Print if we have a complete sentence or list item
-                                        if current_line and (
-                                            any(current_line.rstrip().endswith(x) for x in [".", "!", "?"]) or 
-                                            (in_list and not part.strip())
-                                        ):
-                                            self.safe_print(current_line.strip(), COLORS["MAGENTA"])
-                                            accumulated_response.append(current_line.strip())
-                                            current_line = ""
-                                            time.sleep(random.uniform(0.3, 0.7))
-                                else:
-                                    current_line += content
-
-                    except (json.JSONDecodeError, IndexError):
+                    if not content:
                         continue
 
+                    # Clean up formatting
+                    content = (
+                        content.replace("**", "")
+                        .replace("\n:", ":")
+                        .replace(" :", ":")
+                        .replace(":\n", ": ")
+                    )
+
+                    # Split on newlines
+                    parts = content.split("\n")
+                    
+                    for part in parts:
+                        part = part.strip()
+                        if not part:
+                            # Handle empty lines
+                            if buffer:
+                                if is_list:
+                                    list_items.append(buffer)
+                                else:
+                                    full_response.append(buffer)
+                                buffer = ""
+                            continue
+
+                        # Check if this is a list item
+                        is_new_list_item = any(part.startswith(f"{i}.") for i in range(1, 21))
+
+                        if is_new_list_item:
+                            # Handle previous buffer if exists
+                            if buffer:
+                                if is_list:
+                                    list_items.append(buffer)
+                                else:
+                                    full_response.append(buffer)
+                                buffer = ""
+
+                            # Start new list if needed
+                            if not is_list:
+                                is_list = True
+                                if full_response and full_response[-1]:
+                                    full_response.append("")  # Add spacing before list
+
+                            buffer = part
+                            
+                        else:
+                            # Continue previous line
+                            if buffer:
+                                buffer += " " + part
+                            else:
+                                buffer = part
+
+                        # Check if we should output the buffer
+                        if buffer.endswith((".", "!", "?")):
+                            if is_list:
+                                list_items.append(buffer)
+                            else:
+                                full_response.append(buffer)
+                            self.safe_print(buffer, COLORS["MAGENTA"])
+                            time.sleep(random.uniform(0.2, 0.4))
+                            buffer = ""
+
+                except (json.JSONDecodeError, IndexError):
+                    continue
+
             # Handle any remaining text
-            if current_line:
-                self.safe_print(current_line.strip(), COLORS["MAGENTA"])
-                accumulated_response.append(current_line.strip())
+            if buffer:
+                if is_list:
+                    list_items.append(buffer)
+                else:
+                    full_response.append(buffer)
+                self.safe_print(buffer, COLORS["MAGENTA"])
+
+            # Format final response
+            final_response = []
+            for line in full_response:
+                if line.strip():
+                    final_response.append(line)
+                else:
+                    if final_response and final_response[-1] != "":
+                        final_response.append("")
+
+            # Add list items with proper formatting
+            if list_items:
+                if final_response:
+                    final_response.append("")
+                final_response.extend(list_items)
 
             print()
-            # Join with proper formatting for lists
-            return "\n".join(accumulated_response)
+            return "\n".join(final_response)
 
         except Exception as e:
             self.safe_print(f"✗ Error: {str(e)}", COLORS["RED"])
