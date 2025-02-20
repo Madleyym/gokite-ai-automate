@@ -1,21 +1,21 @@
 # KiteAI Bot
 
-An automated interaction bot for the Kite AI testnet platform that simulates human-like behavior while managing API interactions with various AI agents.
+An automated interaction bot for the Kite AI testnet platform that uses a single EVM wallet address. For multi-wallet functionality, please check the `/Multi-Wallet` directory.
 
 ## Features
 
-- Automated interaction with multiple Kite AI agents
-- Human-like behavior simulation with natural typing and response patterns
+- Single EVM wallet support (non-proxy)
+- Automated interaction with Kite AI agents
+- Human-like behavior simulation
 - Daily interaction limit management (20 interactions per day)
-- Sophisticated anti-detection mechanisms
-- Robust error handling and session management
-- Detailed interaction logging and statistics
+- Anti-detection mechanisms
+- Detailed interaction logging
 - Cross-platform support (Windows, macOS, Linux, Termux)
 
 ## Prerequisites
 
 - Python 3.7 or higher
-- Required Python packages:
+- Required packages:
   - requests
   - urllib3
   - platform
@@ -23,100 +23,49 @@ An automated interaction bot for the Kite AI testnet platform that simulates hum
 
 ## Installation
 
-1. Clone the repository or download the source code
-2. Install the required dependencies:
+1. Clone the repository
+2. Install dependencies:
 ```bash
 pip install requests urllib3
 ```
-3. Configure your settings in `config.py` (see Configuration section)
 
 ## Configuration
 
-Before running the bot, make sure to set up your configuration in `config.py`:
-
-- `DEFAULT_WALLET`: Your default wallet address
-- `BASE_URLS`: API endpoint URLs
-- `AI_ENDPOINTS`: Available AI agents and their configurations
-- `SECURITY`: Security and timing settings
-- `TIMEOUT_SETTINGS`: Request timeout configurations
-- `BROWSERS`: Browser configurations for request headers
+Edit `config.py` and set your wallet address:
+```python
+DEFAULT_WALLET = "YOUR_WALLET_ADDRESS"  # Required: Set your EVM wallet address
+```
 
 ## Usage
 
-1. Run the script:
+1. Run the bot:
 ```bash
 python main.py
 ```
 
-2. Enter your wallet address when prompted (or press Enter to use the default wallet)
-
-3. The bot will automatically:
-   - Generate a unique session ID and device fingerprint
+2. Bot will automatically:
+   - Use your configured wallet address
    - Manage daily interaction limits
-   - Rotate between different AI agents
-   - Report usage statistics
    - Handle errors and retries
-
-## Security Features
-
-- Random user agent rotation
-- Device fingerprinting
-- Session management
-- Natural typing simulation
-- Random delays between actions
-- Automatic retry handling
-- Request header randomization
-
-## Monitoring and Statistics
-
-The bot provides real-time information about:
-- Current interaction count
-- Remaining daily interactions
-- Session duration
-- Success/failure rates
-- Next reset time
-- Detailed response logging
-
-## Error Handling
-
-The bot includes comprehensive error handling for:
-- Network issues
-- API rate limits
-- Invalid responses
-- Session timeouts
-- Daily limit exceedance
+   - Report statistics
 
 ## Important Notes
 
-1. Daily Limit: The bot is limited to 20 interactions per day (UTC)
-2. Rate Limiting: Includes built-in delays to prevent rate limiting
-3. Session Management: Automatically handles session resets and cooldowns
-4. Anti-Detection: Implements various measures to avoid detection
-
-## Termination
-
-- Use Ctrl+C to safely terminate the bot
-- The bot will display final statistics upon termination
-- Session data will be preserved for the next run
+1. This version supports ONE wallet address only
+2. Daily limit: 20 interactions per day
+3. For multi-wallet setup, see `/Multi-Wallet` directory
+4. No proxy required for single wallet usage
 
 ## Troubleshooting
 
-If you encounter issues:
-
-1. Check your wallet address format
+1. Check wallet address format in config.py
 2. Verify network connectivity
-3. Ensure correct configuration in `config.py`
-4. Check console output for error messages
-5. Verify API endpoint availability
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit pull requests or create issues for bugs and feature requests.
+3. Check console for error messages
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - see LICENSE file for details.
 
 ## Disclaimer
 
-This bot is intended for testing purposes on the Kite AI testnet. Please use responsibly and in accordance with the platform's terms of service.
+For testnet use only. Use responsibly and in accordance with platform terms.
