@@ -7,23 +7,26 @@ MAX_DAILY_POINTS = 200
 POINTS_PER_INTERACTION = 10
 
 # Multi-wallet configurations
+# Example configuration template
+# Author: Madleyym
+
+# Multi-wallet configurations example
 WALLET_CONFIGS = [
     {
-        "wallet": "WALLET_ADDRESS_1",  # Replace with actual wallet address
-        "proxy": "http://user:pass@host:port",  # Replace or set to None if not using proxy
+        "wallet": "0x0000000000000000000000000000000000000001",  # Example wallet 1
+        "proxy": "http://user:pass@host:port",  # Replace with actual proxy
         "enabled": True
     },
     {
-        "wallet": "WALLET_ADDRESS_2",
-        "proxy": "http://user:pass@host:port",
-        "enabled": True
-    },
-    {
-        "wallet": "WALLET_ADDRESS_3",
+        "wallet": "0x0000000000000000000000000000000000000002",  # Example wallet 2
         "proxy": None,  # Example without proxy
-        "enabled": False  # Disabled wallet example
+        "enabled": False
+    },
+    {
+        "wallet": "0x0000000000000000000000000000000000000003",  # Example wallet 3
+        "proxy": "http://user:pass@host:port",  # Replace with actual proxy
+        "enabled": True
     }
-    # Add more wallets as needed
 ]
 
 # Security and timing settings
@@ -94,11 +97,11 @@ AI_ENDPOINTS = {
     }
 }
 
-# Browser configurations for user agent generation
+# Browser configurations
 BROWSERS = [
     {
         "name": "Chrome",
-        "weight": 70,  # Higher weight means more likely to be selected
+        "weight": 70,
         "versions": ["108.0.0.0", "109.0.0.0", "110.0.0.0", "111.0.0.0"],
         "platforms": [
             "Windows NT 10.0; Win64; x64",
@@ -119,10 +122,10 @@ BROWSERS = [
     }
 ]
 
-# Request timeout settings
+# Timeout settings
 TIMEOUT_SETTINGS = {
-    "CONNECT": 60,  # Connection timeout in seconds
-    "READ": 120,    # Read timeout in seconds
+    "CONNECT": 60,
+    "READ": 120,
     "MAX_RETRIES": 3,
     "RETRY_DELAY": 1.0
 }
