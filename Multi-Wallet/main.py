@@ -470,7 +470,7 @@ class KiteAIBot:
         return None  # Return None if all retries fail
     
     def run(self) -> None:
-        """Main bot operation loop with daily interaction limit."""
+        """Main bot operation loop with daily interaction limit and wait until next day."""
         try:
             self._print_banner()
             consecutive_failures = 0
@@ -483,8 +483,34 @@ class KiteAIBot:
                             f"\nDaily limit of 20 interactions reached for this wallet.",
                             COLORS["YELLOW"]
                         )
+                        self.safe_print(
+                            f"Waiting {wait_time} until next reset...",
+                            COLORS["CYAN"]
+                        )
                         self._print_final_stats()
-                        return  # Keluar dari method untuk memberi kesempatan wallet berikutnya
+                        
+                        # Calculate seconds until next reset
+                        now = datetime.now(timezone.utc)
+                        seconds_to_wait = (self.next_reset - now).total_seconds()
+                        
+                        # Add a small buffer (5 minutes) to ensure we're past midnight
+                        seconds_to_wait += 300
+                        
+                        # Wait until next reset
+                        self.safe_print(
+                            f"Sleeping until next reset...",
+                            COLORS["YELLOW"]
+                        )
+                        time.sleep(seconds_to_wait)
+                        
+                        # Reset daily interactions counter
+                        self.daily_interactions = 0
+                        self.next_reset = self._get_next_reset_time()
+                        self.used_questions.clear()
+                        
+                        # Print new session banner
+                        self._print_banner()
+                        continue
 
                     self.safe_print("\n" + "=" * 50, COLORS["CYAN"])
                     self.safe_print(
@@ -510,13 +536,6 @@ class KiteAIBot:
                         self.report_usage(endpoint, question, response)
                         self.daily_interactions += 1
                         consecutive_failures = 0
-
-                        if self.daily_interactions >= 20:
-                            self.safe_print(
-                                f"\n{COLORS['GREEN']}✓ Completed 20 interactions for this wallet!{COLORS['RESET']}"
-                            )
-                            self._print_final_stats()
-                            return  # Keluar dari method untuk memberi kesempatan wallet berikutnya
 
                         delay = self._get_random_delay()
                         self.safe_print(
