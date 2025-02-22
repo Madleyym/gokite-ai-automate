@@ -7,26 +7,22 @@ MAX_DAILY_POINTS = 200
 POINTS_PER_INTERACTION = 10
 
 # Multi-wallet configurations
-# Example configuration template
-# Author: Madleyym
-
-# Multi-wallet configurations example
 WALLET_CONFIGS = [
     {
         "wallet": "0x0000000000000000000000000000000000000001",  # Example wallet 1
         "proxy": "http://user:pass@host:port",  # Replace with actual proxy
-        "enabled": True
+        "enabled": True,
     },
     {
         "wallet": "0x0000000000000000000000000000000000000002",  # Example wallet 2
         "proxy": None,  # Example without proxy
-        "enabled": False
+        "enabled": False,
     },
     {
         "wallet": "0x0000000000000000000000000000000000000003",  # Example wallet 3
         "proxy": "http://user:pass@host:port",  # Replace with actual proxy
-        "enabled": True
-    }
+        "enabled": True,
+    },
 ]
 
 # Security and timing settings
@@ -35,12 +31,59 @@ SECURITY = {
     "max_delay": 12.0,
     "typing_speed": 0.05,
     "max_retries": 3,
-    "session_timeout": 3600,
+    "session_timeout": 7200,  # Ditingkatkan ke 2 jam
     "cooldown_base": 30,
-    "request_spacing": {
-        "min": 10,
-        "max": 20
-    }
+    "request_spacing": {"day": {"min": 10, "max": 20}, "night": {"min": 15, "max": 25}},
+}
+
+# Rate limiting configuration
+RATE_LIMIT = {
+    "hourly_limit": 20,
+    "daily_reset": "00:00:00 UTC",
+    "cooldown_period": 300,
+    "max_requests_per_minute": 6,
+    "max_consecutive_requests": 3,
+}
+
+# Time-based security settings
+TIME_SECURITY = {
+    "max_session_duration": 14400,  # 4 jam
+    "force_reset_time": "00:00:00 UTC",
+    "min_interval_between_requests": {"day": 5, "night": 8},
+    "peak_hours": {
+        "start": "08:00:00 UTC",
+        "end": "20:00:00 UTC",
+        "increased_delay": 1.5,  # Multiply normal delay during peak hours
+    },
+}
+
+# Session management
+SESSION_MANAGEMENT = {
+    "rotation_interval": 3600,  # Rotate session every 1 hour
+    "max_session_age": 7200,  # Maximum 2 hours per session
+    "force_rotation_times": ["00:00", "12:00"],  # Force rotation at these times
+    "session_cooldown": 300,  # 5 minutes cooldown between sessions
+}
+
+# Error handling configuration
+ERROR_HANDLING = {
+    "max_consecutive_failures": 5,
+    "backoff_multiplier": 1.5,
+    "max_backoff_time": 300,
+    "reset_after_success_duration": 1800,
+    "critical_error_cooldown": 900,
+}
+
+# Logging configuration
+LOGGING = {
+    "enabled": True,
+    "log_level": "INFO",
+    "log_format": "%(asctime)s UTC - %(levelname)s: %(message)s",
+    "date_format": "%Y-%m-%d %H:%M:%S",
+    "log_file": f"kite_bot_{datetime.now().strftime('%Y%m%d')}.log",
+    "rotate_logs": True,
+    "max_log_size": 10485760,  # 10MB
+    "backup_count": 5,
 }
 
 # Terminal colors
@@ -52,13 +95,13 @@ COLORS = {
     "MAGENTA": "\033[38;2;255;0;255m",
     "CYAN": "\033[38;2;0;255;255m",
     "WHITE": "\033[38;2;255;255;255m",
-    "RESET": "\033[0m"
+    "RESET": "\033[0m",
 }
 
 # API Base URLs
 BASE_URLS = {
     "USAGE_API": "https://quests-usage-dev.prod.zettablock.com/api",
-    "STATS_API": "https://quests-usage-dev.prod.zettablock.com/api/user"
+    "STATS_API": "https://quests-usage-dev.prod.zettablock.com/api/user",
 }
 
 # AI Endpoints configuration
@@ -76,8 +119,9 @@ AI_ENDPOINTS = {
             "What are the key advantages of Kite AI?",
             "Explain Kite AI's approach to blockchain data",
             "How does Kite AI ensure security?",
-            "What are the latest updates in Kite AI?"
-        ]
+            "What are the latest updates in Kite AI?",
+        ],
+        "weight": 50,  # Equal weight with crypto questions
     },
     "https://deployment-nc3y3k7zy6gekszmcsordhu7.stag-vxzy.zettablock.com/main": {
         "agent_id": "deployment_nC3y3k7zy6gekSZMCSordHu7",
@@ -92,9 +136,10 @@ AI_ENDPOINTS = {
             "Give me an update on DOT's price",
             "What's the latest on AVAX?",
             "Current crypto market overview",
-            "Latest price trends in major cryptocurrencies"
-        ]
-    }
+            "Latest price trends in major cryptocurrencies",
+        ],
+        "weight": 50,  # Equal weight with AI questions
+    },
 }
 
 # Browser configurations
@@ -102,30 +147,47 @@ BROWSERS = [
     {
         "name": "Chrome",
         "weight": 70,
-        "versions": ["108.0.0.0", "109.0.0.0", "110.0.0.0", "111.0.0.0"],
+        "versions": ["120.0.0.0", "121.0.0.0", "122.0.0.0"],  # Updated to 2025 versions
         "platforms": [
             "Windows NT 10.0; Win64; x64",
             "Macintosh; Intel Mac OS X 10_15_7",
-            "X11; Linux x86_64"
+            "X11; Linux x86_64",
         ],
-        "template": "Mozilla/5.0 ({platform}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36"
+        "template": "Mozilla/5.0 ({platform}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{version} Safari/537.36",
     },
     {
         "name": "Edge",
         "weight": 30,
-        "versions": ["108.0.1462.76", "109.0.1518.78", "110.0.1587.57"],
+        "versions": [
+            "120.0.2210.77",
+            "121.0.2277.98",
+            "122.0.2345.66",
+        ],  # Updated versions
         "platforms": [
             "Windows NT 10.0; Win64; x64",
-            "Macintosh; Intel Mac OS X 10_15_7"
+            "Macintosh; Intel Mac OS X 10_15_7",
         ],
-        "template": "Mozilla/5.0 ({platform}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_ver} Safari/537.36 Edg/{version}"
-    }
+        "template": "Mozilla/5.0 ({platform}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{chrome_ver} Safari/537.36 Edg/{version}",
+    },
 ]
 
-# Timeout settings
+# Timeout and connection settings
 TIMEOUT_SETTINGS = {
     "CONNECT": 60,
     "READ": 120,
     "MAX_RETRIES": 3,
-    "RETRY_DELAY": 1.0
+    "RETRY_DELAY": 1.0,
+    "BACKOFF_FACTOR": 1.5,
+    "CONNECTION_TIMEOUT": 30,
+    "POOL_MAXSIZE": 10,
+    "POOL_CONNECTIONS": 10,
+}
+
+# Recovery and backup settings
+RECOVERY = {
+    "enabled": True,
+    "backup_interval": 900,  # 15 minutes
+    "max_backup_files": 5,
+    "auto_restore": True,
+    "restore_on_crash": True,
 }
