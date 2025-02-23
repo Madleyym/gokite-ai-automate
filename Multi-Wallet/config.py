@@ -7,6 +7,10 @@ MAX_DAILY_POINTS = 200
 POINTS_PER_INTERACTION = 10
 
 # Multi-wallet configurations
+# Example configuration template
+# Author: Madleyym
+
+# Multi-wallet configurations example
 WALLET_CONFIGS = [
     {
         "wallet": "0x0000000000000000000000000000000000000001",  # Example wallet 1
@@ -31,59 +35,9 @@ SECURITY = {
     "max_delay": 12.0,
     "typing_speed": 0.05,
     "max_retries": 3,
-    "session_timeout": 7200,  # Ditingkatkan ke 2 jam
+    "session_timeout": 3600,
     "cooldown_base": 30,
-    "request_spacing": {"day": {"min": 10, "max": 20}, "night": {"min": 15, "max": 25}},
-}
-
-# Rate limiting configuration
-RATE_LIMIT = {
-    "hourly_limit": 20,
-    "daily_reset": "00:00:00 UTC",
-    "cooldown_period": 300,
-    "max_requests_per_minute": 6,
-    "max_consecutive_requests": 3,
-}
-
-# Time-based security settings
-TIME_SECURITY = {
-    "max_session_duration": 14400,  # 4 jam
-    "force_reset_time": "00:00:00 UTC",
-    "min_interval_between_requests": {"day": 5, "night": 8},
-    "peak_hours": {
-        "start": "08:00:00 UTC",
-        "end": "20:00:00 UTC",
-        "increased_delay": 1.5,  # Multiply normal delay during peak hours
-    },
-}
-
-# Session management
-SESSION_MANAGEMENT = {
-    "rotation_interval": 3600,  # Rotate session every 1 hour
-    "max_session_age": 7200,  # Maximum 2 hours per session
-    "force_rotation_times": ["00:00", "12:00"],  # Force rotation at these times
-    "session_cooldown": 300,  # 5 minutes cooldown between sessions
-}
-
-# Error handling configuration
-ERROR_HANDLING = {
-    "max_consecutive_failures": 5,
-    "backoff_multiplier": 1.5,
-    "max_backoff_time": 300,
-    "reset_after_success_duration": 1800,
-    "critical_error_cooldown": 900,
-}
-
-# Logging configuration
-LOGGING = {
-    "enabled": True,
-    "log_level": "INFO",
-    "log_format": "%(asctime)s UTC - %(levelname)s: %(message)s",
-    "date_format": "%Y-%m-%d %H:%M:%S",
-    "log_file": f"kite_bot_{datetime.now().strftime('%Y%m%d')}.log",
-    "rotate_logs": True,
-    "max_log_size": 10485760,  # 10MB
-    "backup_count": 5,
+    "request_spacing": {"min": 10, "max": 20},
 }
 
 # Terminal colors
@@ -121,7 +75,6 @@ AI_ENDPOINTS = {
             "How does Kite AI ensure security?",
             "What are the latest updates in Kite AI?",
         ],
-        "weight": 50,  # Equal weight with crypto questions
     },
     "https://deployment-nc3y3k7zy6gekszmcsordhu7.stag-vxzy.zettablock.com/main": {
         "agent_id": "deployment_nC3y3k7zy6gekSZMCSordHu7",
@@ -138,7 +91,6 @@ AI_ENDPOINTS = {
             "Current crypto market overview",
             "Latest price trends in major cryptocurrencies",
         ],
-        "weight": 50,  # Equal weight with AI questions
     },
 }
 
@@ -147,7 +99,7 @@ BROWSERS = [
     {
         "name": "Chrome",
         "weight": 70,
-        "versions": ["120.0.0.0", "121.0.0.0", "122.0.0.0"],  # Updated to 2025 versions
+        "versions": ["108.0.0.0", "109.0.0.0", "110.0.0.0", "111.0.0.0"],
         "platforms": [
             "Windows NT 10.0; Win64; x64",
             "Macintosh; Intel Mac OS X 10_15_7",
@@ -158,11 +110,7 @@ BROWSERS = [
     {
         "name": "Edge",
         "weight": 30,
-        "versions": [
-            "120.0.2210.77",
-            "121.0.2277.98",
-            "122.0.2345.66",
-        ],  # Updated versions
+        "versions": ["108.0.1462.76", "109.0.1518.78", "110.0.1587.57"],
         "platforms": [
             "Windows NT 10.0; Win64; x64",
             "Macintosh; Intel Mac OS X 10_15_7",
@@ -171,23 +119,5 @@ BROWSERS = [
     },
 ]
 
-# Timeout and connection settings
-TIMEOUT_SETTINGS = {
-    "CONNECT": 60,
-    "READ": 120,
-    "MAX_RETRIES": 3,
-    "RETRY_DELAY": 1.0,
-    "BACKOFF_FACTOR": 1.5,
-    "CONNECTION_TIMEOUT": 30,
-    "POOL_MAXSIZE": 10,
-    "POOL_CONNECTIONS": 10,
-}
-
-# Recovery and backup settings
-RECOVERY = {
-    "enabled": True,
-    "backup_interval": 900,  # 15 minutes
-    "max_backup_files": 5,
-    "auto_restore": True,
-    "restore_on_crash": True,
-}
+# Timeout settings
+TIMEOUT_SETTINGS = {"CONNECT": 60, "READ": 120, "MAX_RETRIES": 3, "RETRY_DELAY": 1.0}
